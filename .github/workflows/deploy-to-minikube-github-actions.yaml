@@ -21,8 +21,8 @@ jobs:
           docker images         
     - name: Clean previous deployment
       run: |
-        kubectl delete deployment nodejs-app || true
-        kubectl delete service nodejs-app || true
+          kubectl delete deployment nodejs-app || true
+          kubectl delete service nodejs-app || true
     - name: Deploy to minikube
       run:
         kubectl apply -f k8s-node-app.yaml
@@ -30,3 +30,7 @@ jobs:
       run: |
           minikube service list
           minikube service nodejs-app --url
+    - name: Inspect server.js inside pod
+      run: |
+          echo "=== Contenido de server.js dentro del contenedor ==="
+          kubectl exec $(kubectl get pod -l app=nodejs-app -o jsonpath="{.items[0].metadata.name}") -- cat /usr/src/app/server.js
