@@ -49,9 +49,9 @@ jobs:
         minikube service list
         minikube service nodejs-app --url
         echo "=== Probando servicio con port-forward ==="
-        kubectl port-forward service/nodejs-app 3000:80 &
+        kubectl port-forward service/nodejs-app 8080:80 &
         sleep 5
-        curl http://localhost:3000 && echo "✅ Servicio responde correctamente" || echo "❌ Servicio no responde"
+        curl http://localhost:8080 && echo "✅ Servicio responde correctamente" || echo "❌ Servicio no responde"
         echo "=== Verificando que el pod está corriendo ==="
         kubectl get pods
         echo "=== Ejecutando comando dentro del pod para ver procesos ==="
@@ -63,9 +63,10 @@ jobs:
         echo "=== Verificando si node está corriendo ==="
         kubectl exec -it $(kubectl get pod -l app=nodejs-app -o jsonpath="{.items[0].metadata.name}") -- pgrep node || echo "Node no está corriendo"
         echo "=== Intentando curl local dentro del pod ==="
-        kubectl exec -it $(kubectl get pod -l app=nodejs-app -o jsonpath="{.items[0].metadata.name}") -- curl http://localhost:3000 || echo "No responde localmente"
+        kubectl exec -it $(kubectl get pod -l app=nodejs-app -o jsonpath="{.items[0].metadata.name}") -- curl http://localhost:8080 || echo "No responde localmente"
 
     - name: Inspect server.js inside pod
       run: |
         echo "=== Contenido de server.js dentro del contenedor ==="
         kubectl exec $(kubectl get pod -l app=nodejs-app -o jsonpath="{.items[0].metadata.name}") -- cat /usr/src/app/server.js
+
