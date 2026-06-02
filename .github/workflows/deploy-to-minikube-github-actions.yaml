@@ -14,11 +14,11 @@ jobs:
       run: kubectl get pods -A
     - name: Build image
       run: |
-          export SHELL=/bin/bash
-          eval $(minikube -p minikube docker-env)
-          docker build -f ./Dockerfile -t devopshint/node-app:latest .
-          echo -n "verifying images:"
-          docker images         
+        export SHELL=/bin/bash
+        eval $(minikube -p minikube docker-env)
+        docker build -f ./Dockerfile -t devopshint/node-app:latest .
+        echo -n "verifying images:"
+        docker images         
     - name: Deploy to minikube
       run:
         kubectl apply -f k8s-node-app.yaml
@@ -40,11 +40,27 @@ jobs:
         kubectl get pods
         kubectl describe pod -l app=nodejs-app
         kubectl logs -l app=nodejs-app || echo "No logs yet"
+    - name: Debug pod
+      run: |
+        kubectl get pods
+        kubectl logs -l app=nodejs-app
     - name: Test service URLs
       run: |
-          minikube service list
-          minikube service nodejs-app --url
-          echo "=== Probando servicio con port-forward ==="
-          kubectl port-forward service/nodejs-app 3000:80 &
-          sleep 5
-          curl http://localhost:3000 && echo "✅ Servicio responde correctamente" || echo "❌ Servicio no responde"
+        minikube service list
+        minikube service nodejs-app --url
+        echo "=== Probando servicio con port-forward ==="
+        kubectl port-forward service/nodejs-app 3000:80 &
+        sleep 5
+        curl http://localhost:3000 && echo "✅ Servicio responde correctamente" || echo "❌ Servicio no responde"
+        echo "=== Verificando que el pod está corriendo ==="
+        kubectl get pods
+        echo "=== Ejecutando comando dentro del pod para ver procesos ==="
+        kubectl exec -it $(kubectl get pod -l app=nodejs-app -o jsonpath="{.items[0].metadata.name}") -- ps aux || echo "No se pudo ejecutar ps"
+        echo "=== Verificando qué puertos está escuchando el contenedor ==="
+        kubectl exec -it $(kubectl get pod -l app=nodejs-app -o jsonpath="{.items[0].metadata.name}") -- netstat -tulpn || echo "No se pudo ejecutar netstat"
+        echo "=== Mostrando logs completos del contenedor ==="
+        kubectl logs $(kubectl get pod -l app=nodejs-app -o jsonpath="{.items[0].metadata.name}")
+        echo "=== Verificando si node está corriendo ==="
+        kubectl exec -it $(kubectl get pod -l app=nodejs-app -o jsonpath="{.items[0].metadata.name}") -- pgrep node || echo "Node no está corriendo"
+        echo "=== Intentando curl local dentro del pod ==="
+        kubectl exec -it $(kubectl get pod -l app=nodejs-app -o jsonpath="{.items[0].metadata.name}") -- curl http://localhost:3000 || echo "No responde localmente"
