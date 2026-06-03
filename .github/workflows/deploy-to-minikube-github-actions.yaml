@@ -22,7 +22,7 @@ jobs:
     - name: Deploy to minikube
       run:
         kubectl apply -f k8s-node-app.yaml
-        kubectl wait --for condition=available --timeout=600s deployment/nodejs-app
+        sleep 5 ; kubectl wait --for condition=available --timeout=600s deployment/nodejs-app
     - name: Test service URLs
       run: |
           minikube service list
